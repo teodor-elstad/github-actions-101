@@ -14,6 +14,7 @@ _Her kommer det mer innhold, men tentativ agenda er:_
 - Kort presentasjon om CI/CD
 - Introduksjon til GitHub Actions
 - Vi bygger applikasjonen
+    - Hvordan funker det vi skal bygge, og hvorfor heter det [pexeso](https://en.wiktionary.org/wiki/pexeso)?
 - Vi tester applikasjonen
 - Vi deployer applikasjonen
 - Avslutning

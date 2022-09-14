@@ -1,0 +1,9 @@
+# .NET build output
+bin/
+obj/
+
+# .NET development settings
+appsettings.*.json
+
+# VS Code user settings
+.vscode
