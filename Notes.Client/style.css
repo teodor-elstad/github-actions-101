@@ -1,0 +1,183 @@
+/* Taken from https://codepen.io/tutsplus/pen/dNPReW */
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Indie Flower', cursive;
+    font-size: 180%;
+    color: #000;
+    margin: 1em;
+    background: #666;
+    padding: 1em 2em 2em 2em;
+}
+
+ul, li {
+    list-style: none;
+}
+
+ul {
+    overflow: visible;
+    padding-top: 0.6em;
+}
+
+ul li {
+    text-decoration: none;
+    color: #000;
+    background: #ffc;
+    display: block;
+    height: 10em;
+    width: 10em;
+    padding: 1em;
+    -moz-box-shadow: 5px 5px 7px rgba(33, 33, 33, 1);
+    -webkit-box-shadow: 5px 5px 7px rgba(33, 33, 33, .7);
+    box-shadow: 5px 5px 7px rgba(33, 33, 33, .7);
+    -moz-transition: -moz-transform .15s linear;
+    -o-transition: -o-transform .15s linear;
+    -webkit-transition: -webkit-transform .15s linear;
+}
+
+ul li {
+    margin: 1em;
+    float: left;
+}
+
+ul li {
+    -webkit-transform:  rotate(-6deg);
+    -moz-transform: rotate(-6deg);
+}
+
+.note-content {
+    width: 100%;
+    height: 100%;
+    display: inline-block;
+}
+
+textarea, textarea:focus {
+    color: #000;
+    font-family: inherit;
+    font-size: inherit;
+    text-decoration: none;
+    background: none;
+    border: none;
+    outline: none;
+    width: 100%;
+    height: 100%;
+    resize: none;
+}
+
+dialog {
+    margin-top: 3em;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 0.8em;
+    padding: 0.8em 1.1em 0.8em 1.1em;
+    z-index: 3000;
+}
+
+dialog input[type="button"],
+dialog input[type="submit"] {
+    float: right;
+    font-family: inherit;
+    font-size: 0.7em;
+    padding: 0em 0.5em 0em 0.5em;
+    margin-top: 0.2em;
+    margin-left: 0.2em;
+}
+
+button.menu {
+    float: right;
+    font-family: inherit;
+    font-size: 0.7em;
+    padding: 0em 0.5em 0em 0.5em;
+    margin-right: 0.4em;
+}
+
+.error {
+    color: red;
+}
+
+.success {
+    color: green;
+}
+
+table {
+    margin-top: 0.3em;
+    margin-bottom: 0.4em;
+}
+
+table,
+th,
+td {
+    border: black solid 1px;
+}
+
+th,
+td {
+    text-align: center;
+    padding: 0.4em;
+}
+
+th {
+    background-color: #DDD;
+}
+
+ul li button {
+    cursor: pointer;
+    position: absolute;
+    margin-left: 0em;
+    margin-top: -0.9em;
+    font-family: inherit;
+    font-size: inherit;
+    text-decoration: none;
+    background: none;
+    border: none;
+}
+
+ul li:nth-child(even) {
+    -webkit-transform: rotate(4deg);
+    -moz-transform: rotate(4deg);
+    position: relative;
+    top: 5px;
+    background: #cfc;
+}
+
+ul li:nth-child(3n) {
+    -webkit-transform: rotate(-3deg);
+    -moz-transform: rotate(-3deg);
+    position: relative;
+    top: -5px;
+    background: #ccf;
+}
+
+ul li:nth-child(5n) {
+    -webkit-transform: rotate(5deg);
+    -moz-transform: rotate(5deg);
+    position: relative;
+    top: -10px;
+}
+
+ul li:hover, ul li:focus {
+    box-shadow: 10px 10px 7px rgba(0, 0, 0, .7);
+    -moz-box-shadow: 10px 10px 7px rgba(0, 0, 0, .7);
+    -webkit-box-shadow:  10px 10px 7px rgba(0, 0, 0, .7);
+    -webkit-transform:  scale(1.25);
+    -moz-transform:  scale(1.25);
+    position: relative;
+    z-index: 5;
+}
+
+ol {
+    text-align: center;
+}
+
+ol li {
+    display: inline;
+    padding-right: 1em;
+}
+
+ol li {
+    color: #fff;
+}

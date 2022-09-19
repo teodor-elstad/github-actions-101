@@ -7,3 +7,6 @@ appsettings.*.json
 
 # VS Code user settings
 .vscode
+
+# Local SQLite database
+notes.db
