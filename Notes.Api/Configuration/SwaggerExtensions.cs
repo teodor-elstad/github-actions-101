@@ -18,7 +18,6 @@ public static class SwaggerExtensions
 
     public static IServiceCollection AddSwaggerDocumentation(this IServiceCollection services) =>
         services
-            .AddSwaggerGenNewtonsoftSupport()
             .AddSwaggerGen(options =>
             {
                 options.SwaggerDoc(_apiInfo.Version, _apiInfo);

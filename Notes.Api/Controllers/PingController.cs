@@ -10,5 +10,5 @@ public class PingController : ControllerBase
     /// Returns PONG.
     /// </summary>
     [HttpGet]
-    public string Get() => "PONG";
+    public string GetPing() => "PONG";
 }

@@ -10,9 +10,9 @@ Dette er et begynnerkurs i GitHub Actions, og passer for deg som har jobbet lite
 
 🚦Hvordan kommer jeg i gang?
 ----------------------------
-Før du kan gå i gang med oppgavene, trenger du å installere [.NET 6.0 SDK](https://dotnet.microsoft.com/en-us/download), og et passende verktøy for å editere kode. Hvis du ikke har noen spesielle preferanser, er [Visual Studio Code](https://code.visualstudio.com/) et greit valg.
+Før du kan kjøre applikasjonen lokalt, trenger du å installere [.NET 6.0 SDK](https://dotnet.microsoft.com/en-us/download), og et passende verktøy for å editere kode. Hvis du ikke har noen spesielle preferanser, er [Visual Studio Code](https://code.visualstudio.com/) et greit valg.
 
-_Husk å få med: Man trenger også Git og en konto på GitHub._
+For å klone koden, trenger du [Git](https://git-scm.com/downloads). I tillegg trenger du en konto på [GitHub](https://github.com/join) for å kunne bruke [Actions](https://docs.github.com/en/actions/learn-github-actions).
 
 🐙 Kort om CI/CD
 ----------------

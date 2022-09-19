@@ -24,7 +24,7 @@ public class NotesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public Note[] Get()
+    public Note[] GetNotes()
     {
         return _database.Notes.ToArray();
     }
@@ -36,7 +36,7 @@ public class NotesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public ActionResult<Note> Post([FromBody] CreateNote createNote)
+    public ActionResult<Note> CreateNote([FromBody] CreateNote createNote)
     {
         var note = new Note
         {
@@ -57,7 +57,7 @@ public class NotesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public ActionResult<Note> Get([FromRoute] int noteId)
+    public ActionResult<Note> GetNote([FromRoute] int noteId)
     {
         var note = _database.Notes.Find(noteId);
         if (note == null)
@@ -76,7 +76,7 @@ public class NotesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<Note> Patch([FromRoute] int noteId, [FromBody] UpdateNote patchNote)
+    public ActionResult<Note> UpdateNote([FromRoute] int noteId, [FromBody] UpdateNote update)
     {
         var note = _database.Notes.Find(noteId);
         if (note == null)
@@ -84,7 +84,7 @@ public class NotesController : ControllerBase
             return NotFound($"Note with noteId {noteId} not found");
         }
 
-        note.Content = patchNote.Content;
+        note.Content = update.Content;
         _database.SaveChanges();
 
         return Ok(note);
@@ -97,7 +97,7 @@ public class NotesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<Note> Delete([FromRoute] int noteId)
+    public ActionResult<Note> DeleteNote([FromRoute] int noteId)
     {
         var note = _database.Notes.Find(noteId);
         if (note == null)
