@@ -8,6 +8,12 @@ Flere ønsker å lære mer om CI/CD-verktøy generelt, og [GitHub Actions](https
 
 Dette er et begynnerkurs i GitHub Actions, og passer for deg som har jobbet lite eller ingenting med dette fra før. Her starter du med en eksempelapplikasjon, og i løpet av 2 timer får du prøve deg på å skrive en CI/CD-pipeline i GitHub Actions som bygger, tester og deployer applikasjonen. I tillegg inneholder repoet en kort presentasjon av de viktigste temaene innen CI/CD generelt.
 
+🚦Hvordan kommer jeg i gang?
+----------------------------
+Før du kan gå i gang med oppgavene, trenger du å installere [.NET 6.0 SDK](https://dotnet.microsoft.com/en-us/download), og et passende verktøy for å editere kode. Hvis du ikke har noen spesielle preferanser, er [Visual Studio Code](https://code.visualstudio.com/) et greit valg.
+
+_Husk å få med: Man trenger også Git og en konto på GitHub._
+
 🐙 Kort om CI/CD
 ----------------
 _Her kommer det mer innhold, men tentativ agenda er:_
