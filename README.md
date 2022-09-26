@@ -14,6 +14,8 @@ Før du kan kjøre applikasjonen lokalt, trenger du å installere [.NET 6.0 SDK]
 
 For å klone koden, trenger du [Git](https://git-scm.com/downloads). I tillegg trenger du en konto på [GitHub](https://github.com/join) for å kunne bruke [Actions](https://docs.github.com/en/actions/learn-github-actions).
 
+Når vi kommer så langt i kurset at man skal begynne å installere applikasjonen i forskjellige miljøer, trenger du [Docker](https://docs.docker.com/get-docker/) eller [Podman](https://podman.io/getting-started/installation) for å bygge kontainere, og [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) for å orkestrere kontainerene du bygger i Kubernetes.
+
 🐙 Kort om CI/CD
 ----------------
 For at applikasjonene vi lager skal kunne brukes av noen andre enn oss, må vi typisk få de ut et eller annet sted hvor noen andre enn oss kan bruke de. Dette andre stedet kaller vi gjerne produksjon, og på veien ut kan det skje mye rart.
