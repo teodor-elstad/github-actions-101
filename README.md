@@ -72,14 +72,58 @@ jobs:
         run: "echo 'Natta!'"
 ```
 
+_**Oppgave:** Klarer du å utvide workflowen over med ett steg til som kjører en valgfri kommando?_
+
 🏗️ Vi bygger en CI/CD-pipeline!
 -------------------------------
 Nå skal vi ta ibruk GitHub Actions til å lage en enkel CI/CD-pipeline som bygger, tester og installerer _Sticky Notes_ applikasjonen som finnes i dette repoet.
 
 ![](Images/masse-fra-utvikler-til-produksjon.png)
 
-_Herfra blir det code-along med workshop-verten._
+Punkter:
+- Gjennomgang av hvordan man bygger å kjører Notes.Api.Test lokalt.
+- Intro til marketplace, og Actions man trenger for å lage en bygg-pipeline.
+- Guide til å sette opp starten på en pipeline.
+- Oppgave: Gjør ferdig pipelinen sånn at man kjører Notes.Api.Test (Husk fasit)
+- Oppgave: Legg til en action som rapporterer testresultatene (Husk fasit)
 
+🐋 Vi bygger og kjører en applikasjon med Docker
+------------------------------------------------
+
+Punkter:
+- Gjennomgang av hvordan man bygger, kjører og bruker Notes.Api lokalt.
+- Intro til Docker, hvor man leker med ferdige kommandoer.
+- Guide til å lage en enkel Dockerfil for Notes.Api.
+- Oppgave: Kan du gjøre bygget kjappere ved å cache `dotnet restore`-steget? (Husk fasit)
+- Oppgave: Kan du gjøre imaget mindere ved å sette opp en `.dockerignore`-fil? (Husk fasit og info om hvordan man ser hvor stort imaget er)
+- Hvordan deler man imager med omverdenen?
+
+_Husk at man må legge opp til at deltakerne prefikser image med brukernavn f.eks. tae-notes-api._
+
+⎈ Vi deployer en applikasjon til Kubernetes
+--------------------------------------------
+
+Punkter:
+- Kort intro til Kubernetes.
+- Gjennomgang av ferdig oppsatt deployment og service.
+- Guide til å deploye Notes.Api manuelt.
+- Oppgave: Skalere Notes.Api manuelt?
+
+_Husk at man må legge opp til at deltakerne prefikser k8s-ressurser med brukernavn f.eks. tae-notes-api._
+
+🚀 Vi bygger en workflow som deployer Notes.Api
+-----------------------------------------------
+
+Punkter:
+- Kort recap av hva som må gjøres for å deploye applikasjonen:
+  1. Bygge Docker-image med ny image-tag.
+  2. Pushe Docker-image til registry.
+  3. Oppdatere Kubernetes-config til å bruke ny image-tag.
+  4. Kjøre oppdatert Kubernetes-config inn i klyngen.
+- Guide til å sette opp pipeline.
+- Har vi en oppgave her?
+- Oppgave: Sett opp triggere sånn at test-pipelinen kjører på PR'er og deploy-pipelinen kjører når ny versjon kommer inn på main.
+- Spørsmål: Hvilke feil fanges opp av dette oppsettet? Hvilke feil fanges ikke opp?
 
 🔐 Vi tester ut konfigurasjon av docker og kubectl
 --------------------------------------------------
