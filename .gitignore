@@ -5,8 +5,14 @@ obj/
 # .NET development settings
 appsettings.*.json
 
+# .NET test results
+TestResults/
+
 # VS Code user settings
 .vscode
 
 # Local SQLite database
 notes.db
+
+# Published Notes.Api
+Notes.Published/
