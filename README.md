@@ -79,3 +79,50 @@ Nå skal vi ta ibruk GitHub Actions til å lage en enkel CI/CD-pipeline som bygg
 ![](Images/masse-fra-utvikler-til-produksjon.png)
 
 _Herfra blir det code-along med workshop-verten._
+
+
+🔐 Vi tester ut konfigurasjon av docker og kubectl
+--------------------------------------------------
+
+### Logg inn med docker
+Før vi kan pushe docker-imager til registeret `devops101registry.azurecr.io`, må vi logge inn med `docker login`. Kjør kommandoen under, og logg på med [dette brukernavnet](https://nrkconfluence.atlassian.net/wiki/spaces/PTU/pages/106109005/GitHub+Actions+101+kurs+h+st+2022#CONTAINER_REGISTRY_USERNAME) og [dette passordet](https://nrkconfluence.atlassian.net/wiki/spaces/PTU/pages/106109005/GitHub+Actions+101+kurs+h+st+2022#CONTAINER_REGISTRY_PASSWORD).
+
+```shell
+$> docker login devops101registry.azurecr.io
+Username: devops101registry
+Password:
+
+WARNING! Your password will be stored unencrypted ...
+
+Login Succeeded
+```
+
+Hvis alt gikk som det skulle, skal den siste meldingen fra kommandoen være "Login Succeeded".
+
+_Får du en advarsel om at passordet kommer til å lagres ukryptert, er det bare å se bort ifra denne._
+
+### Konfigurer kubectl med tilgang til devops-101-cluster
+For å kunne jobbe med Kubernetes-klyngen `devops-101-cluster`, må vi konfigurere `kubectl`. Konfigurasjonen vi trenger finner du [her](https://nrkconfluence.atlassian.net/wiki/spaces/PTU/pages/106109005/GitHub+Actions+101+kurs+h+st+2022#KUBERNETES_CLUSTER_CONFIG).
+
+Det er flere måter man kan få `kubectl` til å bruke denne konfigurasjonen på:
+1. Man kan lagre konfigurasjonen i en egen fil, og bruke argumentet `--kubeconfig` til å fortelle `kubectl` at man skal bruke denne konfigurasjonen: `kubectl get pods --kubeconfig ~/devops-101-config.yaml`.
+2. Man kan flette inn elementene fra `clusters`, `contexts` og `users` i `kubectl` sin default konfigurasjonsfil (ofte kalt kubeconfig-filen), som er `~/.kube/config` på Linux og Mac, og `%USERPROFILE%\.kube\config` på Windows. Flettingen gjør man ved å åpne kubeconfig-filen i en teksteditor, og klippe inn de forskjellige delene der de hører hjemme. I tillegg må man oppdatere `current-context` til `devops-101-cluster`.
+3. Man kan lagre konfigurasjonen i en egen fil, og så [opprette miljøvariabelen](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/#set-the-kubeconfig-environment-variable) `KUBECONFIG`, med en bane til denne (og flere) konfigurasjonsfiler. Dette er ofte den mest praktiske løsningen hvis man jobber mye med forskjellige konfigurasjoner, men kan være den mest omstendelige løsningen å sette opp.
+
+Velg en av metodene over for å konfigurere `kubectl` til å nå `devops-101-cluster`. Når du har gjort dette, skal du kunne hente alle poddene som kjører i navnerommet `kube-system`, og få et svar litt som vist under:
+```shell
+$> kubectl get pods --namespace kube-system
+NAME                                  READY   STATUS    RESTARTS   AGE
+azure-ip-masq-agent-9g24h             1/1     Running   0          14h
+cloud-node-manager-ztb2l              1/1     Running   0          14h
+coredns-autoscaler-5589fb5654-sknvl   1/1     Running   0          14h
+coredns-b4854dd98-56fgr               1/1     Running   0          14h
+coredns-b4854dd98-fzf48               1/1     Running   0          14h
+csi-azuredisk-node-8cshv              3/3     Running   0          14h
+csi-azurefile-node-kxl6c              3/3     Running   0          14h
+konnectivity-agent-cb784597d-b55lq    1/1     Running   0          14h
+konnectivity-agent-cb784597d-wxwql    1/1     Running   0          14h
+kube-proxy-n45m4                      1/1     Running   0          14h
+metrics-server-f77b4cd8-crwl9         1/1     Running   0          14h
+metrics-server-f77b4cd8-jq29q         1/1     Running   0          14h
+```
