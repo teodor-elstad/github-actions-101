@@ -290,9 +290,100 @@ info: Microsoft.Hosting.Lifetime[0]
 
 Hvis alt gikk bra, kan du åpne [http://localhost:5000/client](http://localhost:5000/client) og leke litt med _Sticky Notes_-applikasjonen. Du kan også pinge APIet direkte ved å gå til [http://localhost:5000/ping](http://localhost:5000/ping).
 
+### Det samme i en Dockerfile
+Start med å opprette en fil i mappen `Notes.Api` med navnet `Dockerfile`, og fyll den med følgende innhold:
 
+```dockerfile
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-stage
+WORKDIR /Sources
 
-### Logg inn med docker
+COPY /Notes.Api ./
+RUN dotnet publish --output ./Notes.Published --configuration Release --self-contained false
+
+FROM mcr.microsoft.com/dotnet/aspnet:6.0
+WORKDIR /Application
+COPY --from=build-stage /Sources/Notes.Published ./
+ENTRYPOINT ["dotnet", "Notes.Api.dll"]
+```
+
+Her tar vi utgangspunkt i et image fra Microsoft som inneholder et Linux-basert operativsystem, med .NET SDK v6.0 ferdig installert `FROM mcr.microsoft.com/dotnet/sdk:6.0`. Videre sier vi at vi skal jobbe i en mappe som heter `/Sources` inne i containeren vi bygger.
+
+Deretter går vi videre med å kopiere alle filene fra mappen `/Notes.Api` inn i imaget, før vi publiserer applikasjonen med `dotnet publish`.
+
+Helt på slutten bruker vi `ENTRYPOINT` for å si at når man starter en container basert på dette imaget, så skal vi kjøre den ferdig bygde `Notes.Api.dll` med `dotnet` direkte, men før dette skjer det noe rart. Hvorfor har vi en ny runde med `FROM` og `WORKDIR`?
+
+Dette er et eksempel på det som kalles et [multi-stage bygg](https://docs.docker.com/build/building/multi-stage/). I multi-stage bygg, bygger vi flere imager på rad. Her bygger vi først et image med .NET SDK v6.0, som bare brukes til å publisere `Notes.Api`. Deretter går vi rett videre å bygger et nytt image basert på ASP.NET-runtime imaget til Microsoft. Dette imaget er spesialtilpasset for å kjøre ASP.NET Core applikasjoner, som er det rammeverket `Notes.Api` er bygget med. Fra det første imaget tar vi også bare med oss de ferdig publiserte filene i `/Sources/Notes.Published`. Dette betyr at vi ender opp med et mye mindre image, og i et multi-stage bygg er det bare det siste imaget vi tar vare på.
+
+Det kan kanskje virke litt rart å trekke inn en sånn optimaliseringsteknikk i et begynnerkurs, men denne teknikken er veldig vanlig, så det kan være greit å vite hva det er snakk om, hvis man støter på det i andre dockerfiler.
+
+_**Oppgave:** Docker [cacher viktige steg](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#leverage-build-cache) når man bygger et image, derfor kan det være nyttig å skille ut operasjoner som sjelden endrer seg i egne steg i starten av dockerfilen. På den måten får man et raskere image-bygg. Klarer du å skille ut restore av Notes.Api i et eget steg før `dotnet publish`, som bare kopierer inn `/Notes.Api/Notes.Api.csproj` og kjører `dotnet restore` på denne prosjektfilen? Hvis du står fast, er det bare å spørre om hjelp, eller ta en tit på forslaget til løsning [her](https://github.com/teodoran/github-actions-101/blob/main/Notes.Api/Dockerfile)._
+
+_**Tips:** Man kan lage en [`.dockerignore`-fil](https://docs.docker.com/engine/reference/builder/#dockerignore-file) for å begrense hvilke filer Docker kopierer inn i imaget når man bygger det. Det kan gjøre det imaget litt kjappere å bygge, og det ferdige imaget litt mindre i størrelse._
+
+### Bygging av et image og kjøring av en container
+Med en Dockerfile på plass, kan vi bygge et image med `docker build`. Kommandoen under bygger et image basert på filen `Notes.Api/Dockerfile`, og image vi bygger tagges med `notes-api:v0`, som er referansen vi kan bruke til å kjøre containere basert på imaget senere. Helt til slutt sender vi inn banen til mappen som vi ønsker at Docker skal kopiere inn filer til imaget fra. Siden vi står i rot-mappen til repoet, blir det banen til mappen vi er i, dvs. `./`.
+
+```shell
+github-actions-101$> docker build --file Notes.Api/Dockerfile --tag notes-api:v0 ./
+Sending build context to Docker daemon  148.8MB
+Step 1/8 : FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-stage
+ ---> c315566c49a2
+Step 2/8 : WORKDIR /Sources
+ ---> Using cache
+ ---> ab33d5dfbc3d
+Step 3/8 : COPY /Notes.Api ./
+ ---> d3d412c5ebb4
+Step 4/8 : RUN dotnet publish --output ./Notes.Published --configuration Release --self-contained false
+ ---> Running in 453acb5ce388
+MSBuild version 17.3.2+561848881 for .NET
+  Determining projects to restore...
+  Restored /Sources/Notes.Api.csproj (in 3.92 sec).
+  Notes.Api -> /Sources/bin/Release/net6.0/Notes.Api.dll
+  Notes.Api -> /Sources/Notes.Published/
+Removing intermediate container 453acb5ce388
+ ---> 9a160daf0848
+Step 5/8 : FROM mcr.microsoft.com/dotnet/aspnet:6.0
+ ---> 914094d6a4a0
+Step 6/8 : WORKDIR /Application
+ ---> Using cache
+ ---> 4d48e7d26353
+Step 7/8 : COPY --from=build-stage /Sources/Notes.Published ./
+ ---> 34ed4d0be017
+Step 8/8 : ENTRYPOINT ["dotnet", "Notes.Api.dll"]
+ ---> Running in 07fa0d7271c1
+Removing intermediate container 07fa0d7271c1
+ ---> eeeaf97b375e
+Successfully built eeeaf97b375e
+Successfully tagged notes-api:v0
+```
+
+Nå kan vi kjøre opp en container baser på imaget `notes-api:v0` med `docker run`.
+
+```shell
+$> docker run -it -p 8000:80 notes-api:v0
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://[::]:80
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Production
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: /Application/
+```
+
+Som før bruker vi flagget `-it`, i tillegg bruker vi flagget `-p 8000:80` for å fortelle Docker at vi ønsker at man skal sende all HTTP-trafikk fra vår maskin på port 8000 til port 80 i containeren. Hvis alt går bra, skal det være mulig å åpne [http://localhost:8000/client/](http://localhost:8000/client/) og [http://localhost:8000/ping](http://localhost:8000/ping), som når _Sticky Notes_-applikasjonen kjørte direkte på vår maskin.
+
+### Deling av et image
+Det er fint å ha et image man kan kjøre lokalt på vår maskin, men målet er å dele dette imaget, sånn at det også kan kjøre på en annen maskin. For å gjøre dette må vi laste imaget opp til et container-register.
+
+Et container-register er i korte trekk en tjeneste som kan ta vare på og dele videre ferdig bygde imager. Man kan se litt på det som en filserver, eller et pakke-register for programvare. For å dele et image via et container-register, er det et par ting som må være på plass:
+1. Man må være logget på container-registrert man ønsker å bruke.
+2. Imaget man skal dele må være tagget på en passende måte.
+3. Man må pushe imaget opp til registeret med kommandoen `docker push`.
+
+For denne workshoppen er det satt opp et container-register i Azure som heter `devops101registry.azurecr.io`. Dette er registeret vi skal bruke videre i kurset.
+
+#### Logg inn på container-registeret
 Før vi kan pushe docker-imager til registeret `devops101registry.azurecr.io`, må vi logge inn med `docker`. Kjør kommandoen under, og logg på med [dette brukernavnet](https://nrkconfluence.atlassian.net/wiki/spaces/PTU/pages/106109005/GitHub+Actions+101+kurs+h+st+2022#CONTAINER_REGISTRY_USERNAME) og [dette passordet](https://nrkconfluence.atlassian.net/wiki/spaces/PTU/pages/106109005/GitHub+Actions+101+kurs+h+st+2022#CONTAINER_REGISTRY_PASSWORD).
 
 ```shell
@@ -309,22 +400,41 @@ Hvis alt gikk som det skulle, skal den siste meldingen fra kommandoen være "Log
 
 _Får du en advarsel om at passordet kommer til å lagres ukryptert, er det bare å se bort ifra denne._
 
+#### Tagg imaget på en passende måte
+Imager som skal lastes opp til registeret vi bruker i dette kurset, må ha en tag som starter på `devops101registry.azurecr.io`. I tillegg må taggen inneholde noe som er unikt for deg som kursdeltaker, da alle deltakerne sine imager havner i samme register. Husk derfor å bytte ut `[DITT BRUKERNAVN]` i kommandoen under med noe passende, sånn at du ender opp med en image tag som er spesifikk for deg, f.eks. noe i retning av `devops101registry.azurecr.io/tae-notes-api:v0`.
 
-Punkter:
-- Gjennomgang av hvordan man bygger, kjører og bruker Notes.Api lokalt.
-- Intro til Docker, hvor man leker med ferdige kommandoer.
-- Guide til å lage en enkel Dockerfil for Notes.Api.
-- Oppgave: Kan du gjøre bygget kjappere ved å cache `dotnet restore`-steget? (Husk fasit)
-- Oppgave: Kan du gjøre imaget mindere ved å sette opp en `.dockerignore`-fil? (Husk fasit og info om hvordan man ser hvor stort imaget er)
-- Hvordan deler man imager med omverdenen?
+```shell
+$> docker tag notes-api:v0 devops101registry.azurecr.io/[DITT BRUKERNAVN]-notes-api:v0
+```
 
-_Husk at man må legge opp til at deltakerne prefikser image med brukernavn f.eks. tae-notes-api._
+#### Push imaget opp til registeret
+Da gjenstår det bare å pushe imaget opp til container-registeret med `docker push`.
+
+```shell
+$> docker push devops101registry.azurecr.io/[DITT BRUKERNAVN]-notes-api:v0
+The push refers to repository [devops101registry.azurecr.io/tae-notes-api]
+c06c1058259d: Pushed
+95f8cee92fd0: Mounted from notes-api
+619c49f548ce: Mounted from notes-api
+dc392f0ae18a: Mounted from notes-api
+b00c9e3dc8e6: Mounted from notes-api
+aa8b36ac3266: Mounted from notes-api
+fe7b1e9bf792: Mounted from notes-api
+v0: digest: sha256:01f9cc95675c9452ccff266f4658999f34ab6c0ef517d681ad8ef9b955091028 size: 1790
+```
+
+Hvis alt gitt bra, er du klar til å gå over til å se litt på Kubernetes.
+
+_**Tips:** Hvis du er usikker på om imaget ditt ble lastet opp til container-registeret, kan du spørre kursholder om vedkommende ser det i registeret._
 
 ⎈ Vi deployer en applikasjon til Kubernetes
 --------------------------------------------
+[Kubernetes](https://kubernetes.io/) er et populært verktøy for å kjøre containere. I tillegg til funksjonalitet for å kjøre kontainere, inneholder det masse andre ting, som muligheten til å skalere opp og ned antallet containere en applikasjon består av, verktøy for å sette opp nettverk mellom containerne, og mye mer. Dette kurset har ikke som mål å gi en grundig introduksjon til Kubernetes, til dette anbefales [Team Utvikleropplevelse sitt Kubernetes-kurs nå i november](https://nrkconfluence.atlassian.net/l/cp/jrfvpsJV). Her kommer vi bare til å dekke det helt minimale man trenger å kunne for å sette opp en GitHub Actions workflow som deployer `Notes.Api` til Kubernetes.
+
+Til dette kurset er det også satt opp et Kubernetes-cluster som heter `devops-101-cluster`. Dette er clusteret vi kommer til å jobbe videre med i kurset.
 
 ### Konfigurer kubectl med tilgang til devops-101-cluster
-For å kunne jobbe med Kubernetes-klyngen `devops-101-cluster`, må vi konfigurere `kubectl`. Konfigurasjonen vi trenger finner du [her](https://nrkconfluence.atlassian.net/wiki/spaces/PTU/pages/106109005/GitHub+Actions+101+kurs+h+st+2022#KUBERNETES_CLUSTER_CONFIG).
+For å kunne jobbe med Kubernetes-clusteret `devops-101-cluster`, må vi konfigurere `kubectl`. Konfigurasjonen vi trenger finner du [her](https://nrkconfluence.atlassian.net/wiki/spaces/PTU/pages/106109005/GitHub+Actions+101+kurs+h+st+2022#KUBERNETES_CLUSTER_CONFIG).
 
 Det er flere måter man kan få `kubectl` til å bruke denne konfigurasjonen på:
 1. Man kan lagre konfigurasjonen i en egen fil, og bruke argumentet `--kubeconfig` til å fortelle `kubectl` at man skal bruke denne konfigurasjonen: `kubectl get pods --kubeconfig ~/devops-101-config.yaml`. Hvis man velger denne løsningen, må man huske å legge på argumentet `--kubeconfig` på alle `kubectl`-kommandoer man kjører videre i kurset.
@@ -349,33 +459,186 @@ metrics-server-f77b4cd8-crwl9         1/1     Running   0          14h
 metrics-server-f77b4cd8-jq29q         1/1     Running   0          14h
 ```
 
-Punkter:
-- Kort intro til Kubernetes.
-- Gjennomgang av ferdig oppsatt deployment og service.
-- Guide til å deploye Notes.Api manuelt.
-- Oppgave: Skalere Notes.Api manuelt?
+### Kubernetes-konfigurasjon for Notes.Api
+For at Kubernetes skal skjønner hvordan man kjører `Notes.Api`, må vi skrive litt Kubernetes-konfigurasjon.
 
-_Husk at man må legge opp til at deltakerne prefikser k8s-ressurser med brukernavn f.eks. tae-notes-api._
+Start med å opprette en fil i mappen `Notes.Api` med navnet `Kubernetes.yaml`, og fyll den med følgende innhold, hvor du erstatter `[DITT BRUKERNAVN]` med noe passende for deg, sånn at du ender opp med f.eks. `tae-notes-api` og samme image tag som du har brukt tidligere:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: [DITT BRUKERNAVN]-notes-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: [DITT BRUKERNAVN]-notes-api
+  template:
+    metadata:
+      labels:
+        app: [DITT BRUKERNAVN]-notes-api
+    spec:
+      imagePullSecrets:
+        - name: devops101registry-credentials
+      containers:
+        - name: notes-api
+          image: devops101registry.azurecr.io/[DITT BRUKERNAVN]-notes-api:v0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: [DITT BRUKERNAVN]-notes-api
+spec:
+  type: LoadBalancer
+  selector:
+    app: [DITT BRUKERNAVN]-notes-api
+  ports:
+    - protocol: TCP
+      port: 80
+```
+
+Denne konfigurasjonen inneholder i hovedsak to ting. Ett deployment som forteller Kubernetes hvordan vi vil at man skal lage containere basert på imaget vårt. Her er det blant annet spesifisert at man ønsker en instans/replika av containeren, og vi forteller Kubernetes hvilke image tag man kan bruke for å hente imaget.
+
+I tillegg setter vi opp en service, som forteller Kubernetes hvordan HTTP-trafikk til clusteret skal rutes videre til containerne som deploymenten setter opp.
+
+### Deploy av Notes.Api til Kubernetes
+Med Kubernetes-konfigurasjonen på plass, kan vi deploye `Notes.Api` til Kubernetes med `kubectl apply`.
+
+```shell
+$> kubectl apply --filename Notes.Api/Kubernetes.yaml
+deployment.apps/[DITT BRUKERNAVN]-notes-api created
+service/[DITT BRUKERNAVN]-notes-api created
+```
+
+Hvis `kubectl apply` kjørte uten feil, kan vi se litt på hva som kom inn i clusteret. La oss først ta en titt på deploymentene i clusteret.
+
+```shell
+$> kubectl get deployments
+NAME            READY   UP-TO-DATE   AVAILABLE   AGE
+...
+[DITT BRUKERNAVN]-notes-api   1/1     1            1           68s
+```
+
+Her finner man deploymenten som vi har konfigurert opp, og man kan bruke `kubectl describe deployment [DITT BRUKERNAVN]-notes-api` for å få flere detaljer om den.
+
+Deploymenten starter noe som kalles pods. Dette er hva som faktisk kjører containeren vår i Kubernetes.
+
+```shell
+$> kubectl get pods
+NAME                            READY   STATUS    RESTARTS   AGE
+...
+[DITT BRUKERNAVN]-notes-api-f5784ddbf-28cfk   1/1     Running   0          111s
+```
+
+_**Oppgave 1: Forsøk å slette podden din med `kubectl delete pod [NAVN PÅ POD]`. Hva ser du når du kjører `kubectl get pods` igjen?_
+
+Til slutt kan vi ta en titt på servicen som ble satt opp.
+
+```shell
+$> kubectl get services
+NAME                          TYPE           CLUSTER-IP     EXTERNAL-IP    PORT(S)        AGE
+kubernetes                    ClusterIP      10.0.0.1       <none>         443/TCP        29h
+...
+[DITT BRUKERNAVN]-notes-api   LoadBalancer   10.0.106.98    20.76.158.49   80:31338/TCP   34s
+```
+
+Her kan vi se at servicen har fått en ekstern IP-adresse. Denne kan vi bruke for å nå _Sticky Notes_-applikasjonen som kjører på clusteret. Hvis du åpner [http://[DIN EXTERNAL-IP]/client](http://20.76.158.49/client/) og [http://[DIN EXTERNAL-IP]/ping](http://20.76.158.49/ping), skal du se det samme som du så når applikasjonen kjørte lokalt.
+
+_**Oppgave 2:** I Kubernetes-konfigurasjonen er det `replicas:` i deploymentet som styrer hvor mange instanser av Notes.Api man starter opp. Klarer du å skalere opp din versjon av Notes.Api til to instanser? Hva skjer når du forsøker å bruke Notes.Api når det er mer enn en instans som kjører?_
 
 🚀 Vi bygger en workflow som deployer Notes.Api
 -----------------------------------------------
+Nå som vi kjenner litt til både Docker og Kubernetes, er vi klar til å lage en GitHub Actions workflow som:
+1. Bygger et image fra `Notes.Api/Dockerfile`, og pusher det opp til container-registeret `devops101registry.azurecr.io`, med en image-tag som er unik for denne kjøringen av workflowen.
+2. Oppdaterer `Notes.Api/Kubernetes.yaml` med taggen til det ny-byggede imaget.
+3. Deployer den oppdaterte Kubernetes-konfigurasjonen til `devops-101-cluster`
+4. Sånn at Kubernetes kan hente ned det nye imaget fra container-registeret, og kjøre opp applikasjonen vår.
 
 ![](Images/fra-docker-til-kubernetes.png)
 
-Punkter:
-- Kort recap av hva som må gjøres for å deploye applikasjonen:
-  1. Bygge Docker-image med ny image-tag.
-  2. Pushe Docker-image til registry.
-  3. Oppdatere Kubernetes-config til å bruke ny image-tag.
-  4. Kjøre oppdatert Kubernetes-config inn i klyngen.
-- Guide til å sette opp pipeline.
-- Har vi en oppgave her?
-- Oppgave: Sett opp triggere sånn at test-pipelinen kjører på PR'er og deploy-pipelinen kjører når ny versjon kommer inn på main.
-- Spørsmål: Hvilke feil fanges opp av dette oppsettet? Hvilke feil fanges ikke opp?
+### Kort om hemmeligheter i GitHub Actions
+Actions kan hente hemmeligheter som er konfigurert under _Settings -> Actions -> Repository secrets_. For at workflowen vi lager skal kunne logge seg på container-registeret og kubernetes-clusteret, trenger vi derfor å sette opp [de samme hemmelighetene](https://nrkconfluence.atlassian.net/wiki/spaces/PTU/pages/106109005/GitHub+Actions+101+kurs+h+st+2022#%F0%9F%94%90-N%C3%B8kler-til-bruk-under-kurset) her som vi har brukt ellers i kurset.
 
+![](Images/github-actions-secrets.png)
 
+Disse hemmelighetene vil vi da kunne hente ut i en workflow med syntaksen `${{ secrets.CONTAINER_REGISTRY_USERNAME }}`, `${{ secrets.CONTAINER_REGISTRY_PASSWORD }}` og `${{ secrets.KUBERNETES_CLUSTER_CONFIG }}`.
+
+### En workflow for deploy
+For å få på plass en workflow som både bruker Docker og deployer til Kubernetes, kommer vi til å bruke flere ferdiglagde actions:
+- [docker/login-action](https://github.com/marketplace/actions/docker-login), som logger `docker` inn på container-registeret `devops101registry.azurecr.io`.
+- [docker/build-push-action](https://github.com/marketplace/actions/build-and-push-docker-images), som bygger og pusher Docker images, og som er avhengig av at action [docker/setup-buildx-action](https://github.com/marketplace/actions/docker-setup-buildx) er kjørt først.
+- [azure/setup-kubectl](https://github.com/marketplace/actions/kubectl-tool-installer) som installerer `kubectl`.
+- [azure/k8s-set-context](https://github.com/marketplace/actions/kubernetes-set-context) som konfigurerer `kubectl` til å bruke kubeconfig-filen vi har lagt inn i _Repository secrets_.
+- [azure/k8s-deploy](https://github.com/marketplace/actions/deploy-to-kubernetes-cluster) som deployer oppdatert Kubernetes-konfigurasjon til `devops-101-cluster`.
+
+Under er en mangelfull workflow du kan ta utgangspunkt i, ved å legge den inn i en fil som f.eks. heter `hello-deploy.yml` under mappen `.github/workflows`.
+
+```yaml
+name: "Hello Deploy"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: "Login to container registry"
+        uses: docker/login-action@v2
+        with:
+          registry: devops101registry.azurecr.io
+          username: [HVA MANGLER HER?]
+          password: [HVA MANGLER HER?]
+
+      - name: "Set up Docker Buildx"
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          [HER MANGLER FLERE LINJER]
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: azure/setup-kubectl@v3
+
+      - uses: azure/k8s-set-context@v1
+        with:
+          method: kubeconfig
+          kubeconfig: [HVA MANGLER HER?]
+          context: devops-101-cluster
+
+      - uses: Azure/k8s-deploy@v3.1
+        with:
+          [HER MANGLER FLERE LINJER]
+```
+
+_**Oppgave:** Fyll inn det som mangler i workflowen over, sånn at du kan kjøre den fra GitHub og deploye nye versjoner av `Notes.Api`. Hvis du står fast, er det bare å spørre om hjelp, eller ta en tit på forslaget til løsning [her](https://github.com/teodoran/github-actions-101/blob/main/.github/workflows/hello-deploy.yml)._
+
+_**Tips:** For å lage en image-tag som er unik for hver kjøring av workflowen, kan det være nyttig å bruke miljøvariabelen `github.run_number` sånn at image-taggen man bruker i workflowen er noe i retning av `devops101registry.azurecr.io/notes-api:v${{ github.run_number }}`._
 
 🔗 Vi knytter sammen workflows til en CI/CD-pipeline
 ----------------------------------------------------
+Helt til slutt i kurset skal vi knytte sammen to av workflowene vi har skrevet til en litt større CI/CD-pipeline. Med litt flaks har vi en `hello-dotnet.yml`-workflow som kjører tester for å sjekke om applikasjonen ser ut til å fungere som forventet. I tillegg har vi en `hello-deploy.yml`-workflow som kan deploye applikasjonen.
 
 ![](Images/masse-fra-utvikler-til-produksjon.png)
+
+Med dette i bahodet kan vi vurdere hvordan disse to workflowene kunne ha vært organisert i en CI/CD-pipeline:
+1. Når en utvikler har skrevet ny kode, hadde det vært nyttig å kreve at man må gjennom en pull request før man får merge til `main`-branchen i repoet. I tillegg hadde det vært nyttig å kreve at testene i `hello-dotnet.yml` kjører ok. Dette kunne man fått til ved å trigge denne workflowen [når man har en pull request](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#on), og sette opp en [branch protction rule](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/about-protected-branches).
+2. Videre hadde det vært nyttig å deploye all kode etter den er merget inn til `main`-branchen. Dette kunne man fått til ved å sette opp en trigger som kjører `hello-deploy.yml`-workflowen når det kommer inn en ny commit på `main`-branchen.
+
+_**Oppgave:** Se om du kan sette opp noen triggere på `hello-dotnet.yml` og `hello-deploy.yml` -workflowene, som setter de sammen i en litt større CI/CD-pipeline. Gi gjerne workflowene nye navn som passer bedre med rollen de har i pipelinen._
+
+_**Spørsmål:** Hvilke feil fanges opp av den CI/CD-pipelinen du nå har satt opp? Hvilke feil fanges ikke opp?_
