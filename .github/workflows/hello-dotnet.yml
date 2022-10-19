@@ -2,6 +2,9 @@ name: "Hello .NET"
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
 
 env:
   TEST_PROJECT_PATH: Notes.Api.Test/Notes.Api.Test.csproj
