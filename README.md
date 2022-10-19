@@ -316,7 +316,7 @@ Dette er et eksempel på det som kalles et [multi-stage bygg](https://docs.docke
 
 Det kan kanskje virke litt rart å trekke inn en sånn optimaliseringsteknikk i et begynnerkurs, men denne teknikken er veldig vanlig, så det kan være greit å vite hva det er snakk om, hvis man støter på det i andre dockerfiler.
 
-_**Oppgave:** Docker [cacher viktige steg](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#leverage-build-cache) når man bygger et image, derfor kan det være nyttig å skille ut operasjoner som sjelden endrer seg i egne steg i starten av dockerfilen. På den måten får man et raskere image-bygg. Klarer du å skille ut restore av Notes.Api i et eget steg før `dotnet publish`, som bare kopierer inn `/Notes.Api/Notes.Api.csproj` og kjører `dotnet restore` på denne prosjektfilen? Hvis du står fast, er det bare å spørre om hjelp, eller ta en tit på forslaget til løsning [her](https://github.com/teodoran/github-actions-101/blob/main/Notes.Api/Dockerfile)._
+_**Oppgave:** Docker [cacher viktige steg](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#leverage-build-cache) når man bygger et image, derfor kan det være nyttig å skille ut operasjoner som sjelden endrer seg i egne steg i starten av dockerfilen. På den måten får man et raskere image-bygg. Klarer du å skille ut restore av Notes.Api i et eget steg før `dotnet publish`, som bare kopierer inn `/Notes.Api/Notes.Api.csproj` og kjører `dotnet restore` på denne prosjektfilen? Hvis du står fast, er det bare å spørre om hjelp, eller ta en titt på forslaget til løsning [her](https://github.com/teodoran/github-actions-101/blob/main/Notes.Api/Dockerfile)._
 
 _**Tips:** Man kan lage en [`.dockerignore`-fil](https://docs.docker.com/engine/reference/builder/#dockerignore-file) for å begrense hvilke filer Docker kopierer inn i imaget når man bygger det. Det kan gjøre det imaget litt kjappere å bygge, og det ferdige imaget litt mindre i størrelse._
 
@@ -625,7 +625,7 @@ jobs:
           [HER MANGLER FLERE LINJER]
 ```
 
-_**Oppgave:** Fyll inn det som mangler i workflowen over, sånn at du kan kjøre den fra GitHub og deploye nye versjoner av `Notes.Api`. Hvis du står fast, er det bare å spørre om hjelp, eller ta en tit på forslaget til løsning [her](https://github.com/teodoran/github-actions-101/blob/main/.github/workflows/hello-deploy.yml)._
+_**Oppgave:** Fyll inn det som mangler i workflowen over, sånn at du kan kjøre den fra GitHub og deploye nye versjoner av `Notes.Api`. Hvis du står fast, er det bare å spørre om hjelp, eller ta en titt på forslaget til løsning [her](https://github.com/teodoran/github-actions-101/blob/main/.github/workflows/hello-deploy.yml)._
 
 _**Tips:** For å lage en image-tag som er unik for hver kjøring av workflowen, kan det være nyttig å bruke miljøvariabelen `github.run_number` sånn at image-taggen man bruker i workflowen er noe i retning av `devops101registry.azurecr.io/notes-api:v${{ github.run_number }}`._
 
