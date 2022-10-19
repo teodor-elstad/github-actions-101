@@ -12,3 +12,5 @@ jobs:
         run: "echo 'Hei på deg GitHub Actions!'"
       - name: "Echo Goodnight"
         run: "echo 'Natta!'"
+      - name: "Print working directory"
+        run: "pwd"
