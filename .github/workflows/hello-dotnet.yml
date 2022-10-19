@@ -23,4 +23,4 @@ jobs:
       - name: ".NET Build"
         run: dotnet build --no-restore --configuration Release Notes.Api.Test/Notes.Api.Test.csproj
       - name: ".NET Test"
-        run: dotnet test --no-build --configuration Release --verbosity normal --logger trxNotes.Api.Test/Notes.Api.Test.csproj
+        run: dotnet test --no-build --configuration Release --verbosity normal --logger trx Notes.Api.Test/Notes.Api.Test.csproj
