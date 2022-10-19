@@ -33,5 +33,5 @@ jobs:
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: .NET Test Report
-          path: $TEST_PROJECT_PATH/TestResults/*.trx
+          path: Notes.Api.Test/TestResults/*.trx
           reporter: dotnet-trx
