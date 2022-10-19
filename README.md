@@ -534,7 +534,7 @@ NAME                            READY   STATUS    RESTARTS   AGE
 [DITT BRUKERNAVN]-notes-api-f5784ddbf-28cfk   1/1     Running   0          111s
 ```
 
-_**Oppgave 1: Forsøk å slette podden din med `kubectl delete pod [NAVN PÅ POD]`. Hva ser du når du kjører `kubectl get pods` igjen?_
+_**Oppgave 1:** Forsøk å slette podden din med `kubectl delete pod [NAVN PÅ POD]`. Hva ser du når du kjører `kubectl get pods` igjen?_
 
 Til slutt kan vi ta en titt på servicen som ble satt opp.
 
