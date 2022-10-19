@@ -3,6 +3,9 @@ name: "Hello .NET"
 on:
   workflow_dispatch:
 
+env:
+  TEST_PROJECT_PATH: Notes.Api.Test/Notes.Api.Test.csproj
+
 jobs:
   build-test:
     runs-on: ubuntu-latest
@@ -19,8 +22,8 @@ jobs:
         run: dotnet --version
 
       - name: ".NET Restore"
-        run: dotnet restore Notes.Api.Test/Notes.Api.Test.csproj
+        run: dotnet restore $TEST_PROJECT_PATH
       - name: ".NET Build"
-        run: dotnet build --no-restore --configuration Release Notes.Api.Test/Notes.Api.Test.csproj
+        run: dotnet build --no-restore --configuration Release $TEST_PROJECT_PATH
       - name: ".NET Test"
-        run: dotnet test --no-build --configuration Release --verbosity normal --logger trx Notes.Api.Test/Notes.Api.Test.csproj
+        run: dotnet test --no-build --configuration Release --verbosity normal --logger trx $TEST_PROJECT_PATH
