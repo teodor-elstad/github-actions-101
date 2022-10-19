@@ -1,0 +1,9 @@
+# .NET build output
+Notes.Api/bin/
+Notes.Api/obj/
+
+# .NET development settings
+Notes.Api/appsettings.*.json
+
+# Local SQLite database
+Notes.Api/notes.db
