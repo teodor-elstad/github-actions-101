@@ -27,3 +27,11 @@ jobs:
         run: dotnet build --no-restore --configuration Release $TEST_PROJECT_PATH
       - name: ".NET Test"
         run: dotnet test --no-build --configuration Release --verbosity normal --logger trx $TEST_PROJECT_PATH
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: .NET Test Report
+          path: $TEST_PROJECT_PATH/TestResults/*.trx
+          reporter: dotnet-trx
