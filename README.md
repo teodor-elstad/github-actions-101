@@ -631,7 +631,7 @@ _**Tips:** For å lage en image-tag som er unik for hver kjøring av workflowen,
 
 🔗 Vi knytter sammen workflows til en CI/CD-pipeline
 ----------------------------------------------------
-Helt til slutt i kurset skal vi knytte sammen to av workflowene vi har skrevet til en litt større CI/CD-pipeline. Med litt flaks har vi en `hello-dotnet.yml`-workflow som kjører tester for å sjekke om applikasjonen ser ut til å fungere som forventet. I tillegg har vi en `hello-deploy.yml`-workflow som kan deploye applikasjonen.
+Nå kan vi knytte sammen to av workflowene vi har skrevet til en litt større CI/CD-pipeline. Med litt flaks har vi en `hello-dotnet.yml`-workflow som kjører tester for å sjekke om applikasjonen ser ut til å fungere som forventet. I tillegg har vi en `hello-deploy.yml`-workflow som kan deploye applikasjonen.
 
 ![](Images/masse-fra-utvikler-til-produksjon.png)
 
@@ -642,3 +642,207 @@ Med dette i bahodet kan vi vurdere hvordan disse to workflowene kunne ha vært o
 _**Oppgave:** Se om du kan sette opp noen triggere på `hello-dotnet.yml` og `hello-deploy.yml` -workflowene, som setter de sammen i en litt større CI/CD-pipeline. Gi gjerne workflowene nye navn som passer bedre med rollen de har i pipelinen._
 
 _**Spørsmål:** Hvilke feil fanges opp av den CI/CD-pipelinen du nå har satt opp? Hvilke feil fanges ikke opp?_
+
+📺 Vi bruker nrk-template-build-and-deploy
+------------------------------------------
+Nå som vi har blitt litt kjent med hvordan det er å skrive workflows som bygger og deployer kode til Kubernetes, skal vi se litt på hvordan man kan gjøre det samme i et "ekte" NRK cluster, ved å bruke [nrk-template-build-and-deploy](https://github.com/nrkno/nrk-template-build-and-deploy).
+
+### Hva er nrk-template-build-and-deploy?
+[nrk-template-build-and-deploy](https://github.com/nrkno/nrk-template-build-and-deploy) er et [GitHub template repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-template-repository) som lar oss lage nye repoer. Det inneholder skript og templates for å generere blant annet GitHub Action workflows og Kubernetes-konfigurasjon, som kan bygge applikasjonen vår med Docker og deployer den til ett av NRK sine Kubernestes-clustere.
+
+I praksis funker nrk-template-build-and-deploy litt som dette:
+1. Man genererer ett nytt repo med [nrk-template-build-and-deploy](https://github.com/nrkno/nrk-template-build-and-deploy).
+2. Man legger til koden til applikasjonen i repoet.
+2. Man følger oppskriften i README-filen, og kjører script som setter opp GitHub Actions workflows og andre nyttige ting.
+
+Til slutt ender man opp med et repo med ferdig oppsatte workflows som kan bygge og deploye applikasjonen til Kubernetes.
+
+_Repoet nrk-template-build-and-deploy innholder en [getting started guide](https://github.com/nrkno/nrk-template-build-and-deploy#getting-started) som forklarer hvordan man bruker template repoet, men under er en litt mer detaljert beskrivelse av hvordan man kan bruke det for å bygge og deploye `Notes.Api`._
+
+### Installere Python 3, pip og Vault
+Før vi går i gang med å bruke nrk-template-build-and-deploy, trenger vi å installere [Python 3](https://www.python.org/) [pip](https://pip.pypa.io/en/stable/installation/).
+
+Hvis alt har gått bra, skal du kunne kjøre `python3 --version`:
+
+```shell
+$> python3 --version
+Python 3.8.10
+```
+
+I tillegg skal du kunne installere pakken `jinja2` med `pip`:
+
+```shell
+$> pip install jinja2
+Collecting jinja2
+  Downloading Jinja2-3.1.2-py3-none-any.whl (133 kB)
+Collecting MarkupSafe>=2.0
+  Downloading MarkupSafe-2.1.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (25 kB)
+Installing collected packages: MarkupSafe, jinja2
+Successfully installed MarkupSafe-2.1.1 jinja2-3.1.2
+```
+
+Pakken `jinja2` kommer vi til å bruke når vi skal ta ibruk nrk-template-build-and-deploy senere.
+
+Skriptet i nrk-template-build-and-deploy integrerer også med [Vault](https://www.vaultproject.io/). Dette er en teknologi som brukes for å håndtere hemmeligheter som databasebrukere, API-nøkler, etc. på en sikker måte. Workflowen vi skal generere senere, bruker Vault for å hente ut hemmeligheter for å koble seg på Kubernetes-clusteret vi skal deploye til. Dermed trenger du også å installere [Vault CLI](https://developer.hashicorp.com/vault/downloads), og sette miljøvariabelen `VAULT_ADDR` som beskrevet [her](https://nrkconfluence.atlassian.net/wiki/spaces/PLAT/pages/3303986/Hashicorp+Vault#Kommandolinjeoperasjoner).
+
+### Konfigurere kubectl med tilgang til aks-plattform-cdn-sandbox-eno
+Nå skal vi gå over til å bruke et "ekte" [NRK-kluster](https://nrkconfluence.atlassian.net/l/cp/AVYJ2tmY) satt opp av [Plattform](https://nrkconfluence.atlassian.net/wiki/spaces/PLAT/overview?homepageId=3302429).
+
+_Plattform er et fellesnavn på flere team som jobber med å gjøre NRK sin tjenesteutvikling enklere. De har blant annet ansvar for å sette opp og vedlikeholde felles tjenester som Kubernetes-clustere, drifte felles nettverksinfrastruktur og lagringstjenester som MySQL og PostgreSQL, samt hjelpe nye og eksisterende brukere av plattform sine tjenester. I tillegg overvåker de NRK sine tjenester på nett, med mål om å oppdage og rette feil før de treffer publikum. [Blåmerket sti](https://nrkconfluence.atlassian.net/l/cp/ZNAx7Wg8) er et godt sted å starte hvis man vil lære mer om hvilke teknologier Plattform støtter._
+
+Før vi kan logge på clusteret `aks-plattform-cdn-sandbox-eno`, må vi ha [kubelogin](https://github.com/Azure/kubelogin) installert. Grunnen til dette er at tilgang til Plattform sine clustere styres av mer avanserte autentiseringsmekanismer enn det vi har brukt tidligere i kurset.
+
+Når `kubelogin` er installert, skal du kunne kjøre kommandoen `kubelogin --version`, og få et svar som ligner litt på det vist under:
+
+```shell
+$> kubelogin --version
+kubelogin version
+git hash: v0.0.20/872ed59b23e06c3a0eb950cb67e7bd2b0e9d48d7
+Go version: go1.18.5
+Build time: 2022-08-09T18:30:45Z
+Platform: linux/amd64
+```
+
+Konfigurasjon til det nye clusteret finner du [her](https://nrkconfluence.atlassian.net/wiki/spaces/PTU/pages/106109005/GitHub+Actions+101+kurs+h+st+2022#Config-til-Plattform-AKS-CDN-Sandbox-ENO). Legg til denne konfigurasjonen på samme måte som du gjorde i seksjonen [konfigurer kubectl med tilgang til devops-101-cluster](https://github.com/teodor-elstad/github-actions-101#konfigurer-kubectl-med-tilgang-til-devops-101-cluster). Når du er ferdig, skal du kunne bytte til contexten `aks-plattform-cdn-sandbox-eno` ved eksempelvis å bruke `kubectl config use-context` eller `kubectx`:
+
+```shell
+$> kubectl config use-context aks-plattform-cdn-sandbox-eno
+Switched to context "aks-plattform-cdn-sandbox-eno".
+```
+
+Du skal også kunne hente alle poddene i navnerommet `actions-201-kurs`:
+
+```shell
+$> kubectl get pods -n actions-201-kurs
+...
+```
+
+_**Tips:** Her kan det være at du må gjennom device-login til clusteret i nettleseren. Logg på med din NRK-bruker, og følg ellers stegene du presenteres for._
+
+### Generer ett nytt repo med nrk-template-build-and-deploy
+Gå til [nrk-template-build-and-deploy](https://github.com/nrkno/nrk-template-build-and-deploy) og generer et nytt repo ved å trykke på den knappen "Use this template".
+
+Gi det nye repoet ditt et navn som er unikt for deg, med prefiksen `github-actions-101-`, eksempelvis `github-actions-101-tae`.
+
+![](Images/generate-new-repo-from-template.gif)
+
+### Kopier over Note.Api applikasjonen
+Klon ned det nye repoet, og kopier over mappene `Notes.Api/` og `Notes.Api.Test/`. Flett også inn innholdet fra `.gitignore` i det nye repoet.
+
+Når dette er på plass, erstatter du innholdet i `Dockerfile` i det nye repoet, med innholdet i den Docker-filen du har skrevet tidligere. Flytt også filen `Notes.Api/.dockerignore` til rot-mappen.
+
+![](Images/new-repo-after-copy.png)
+
+_**Tips:** Hvis du lurer på hvordan innholdet i `Dockerfile` kan være, kan du ta en titt [her](https://github.com/teodoran/github-actions-101/blob/main/Notes.Api/Dockerfile)._
+
+Nå kan vi teste at alt bygger ved å kjøre `docker build`:
+
+```shell
+github-actions-101-tae $> docker build --file Dockerfile --tag template-notes-api:v0 ./
+```
+
+Med litt flaks bygget alt som det skulle, og vi kan sjekke at containeren kjører som før med `docker run`:
+
+```shell
+github-actions-101-tae $> docker run -it -p 8000:80 template-notes-api:v0
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://[::]:80
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Production
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: /Application/
+```
+
+Hvis alt dette gikk bra, kan du sjekke ut en ny branch, committe endringene, og pushe den nye branchen opp til repoet.
+
+```shell
+github-actions-101-tae $> git checkout -b initial-setup
+Switched to a new branch 'initial-setup'
+github-actions-101-tae $> git add .gitignore Dockerfile .dockerignore Notes.Api/ Notes.Api.Test/
+github-actions-101-tae $> git commit -m "Legger til Notes.Api"
+[initial-setup 27c4666] Legger til Notes.Api
+...
+ 23 files changed, 887 insertions(+), 3 deletions(-)
+github-actions-101-tae $> git push origin initial-setup
+...
+ * [new branch]      initial-setup -> initial-setup
+```
+
+### Kjør script for å generere workflows med mer
+Som beskrevet i [getting started guiden](https://github.com/nrkno/nrk-template-build-and-deploy#getting-started), er tiden nå kommet til å kjøre `.github/scripts/run.sh`.
+
+_**NB:** Hvis du sitter på hjemmekontor, er det viktig at du er koblet på NRK sitt nett med VPN._
+
+Når du kjører kommandoen er skal du bruke clusteret `aks-plattform-cdn-sandbox-eno` og navnerommet `actions-201-kurs`. Hvis skriptet kjører som det skal, vil det printe ut noe som ligner på listingen under:
+
+```shell
+github-actions-101-tae $> .github/scripts/run.sh
+Insert the name of the cluster (for example: aks-plattform-int-nonprod-weu):
+aks-plattform-cdn-sandbox-eno
+Insert the namespace where the deployment will reside:
+actions-201-kurs
+No value found at secret/applications/shared/kubernetes-config/aks-plattform-cdn-sandbox-eno
+
+----------------------------------------
+Make sure you are connected to the VPN in order to reach the cluster API
+If you need to create the namespace first, do this via the mknamespace url for your corresponding cluster: https://confluence.nrk.no/display/PLAT/Liste+over+kubernetes+clustre+og+config
+
+
+The deployment will get the name: github-actions-101-tae
+The service will get the name: github-actions-101-tae
+The ingress will get the name: github-actions-101-tae
+It will be deployed in the namespace: actions-201-kurs
+The hostname of the ingress will be: github-actions-101-tae.
+Vault github_application will be: github-actions-101-tae-github
+----------------------------------------
+
+Press [Enter] key to create...
+Templating file: deployment.yaml.tmpl on path manifests/main/. Result will be in: manifests/main/deployment.yaml
+Templating file: ingress.yaml.tmpl on path manifests/main/. Result will be in: manifests/main/ingress.yaml
+Templating file: service.yaml.tmpl on path manifests/main/. Result will be in: manifests/main/service.yaml
+Templating file: docker-build-push.yaml.tmpl on path .github/workflows/. Result will be in: .github/workflows/docker-build-push.yaml
+Templating file: README.md.tmpl on path . Result will be in: README.md
+Templating file: plattform-terraform-vault.yaml.tmpl on path . Result will be in: plattform-terraform-vault.yaml
+
+The following snippet needs to be inserted into `plattform-terraform-vault-config` repo under 'vault-access-definitions' in the correct folder
+---
+# Access to github-repo github-actions-101-tae
+github_applications:
+# Resten av kodesnutten er utelatt
+
+Manifest files have now been created by this script..
+Feel free to change the manifests files to your liking.
+New README.md can be found under .github/scripts/README.md. Make sure to overwrite existing one before commiting your changes!
+The names generated from this script is not the required names but instead is meant as a simple start to get you going.
+```
+
+_**Tips:** Det kan være at du blir logget på Vault i nettleseren underveis i kjøringen av skriptet. Dette er normalt første gang man kjører det etter å ha installert Vault CLI._
+
+#### Hva skjedde nå?
+Hvis alt gikk bra, skal du ha fått generert blant annet:
+1. GitHub Action worflows i mappen `.github/workflows/`. Ta en titt på innholdet i `docker-build-push.yaml` i denne mappen. Er det ting du kjenner igjen? Er det ting som er nytt?
+2. Kubernetes-konfigurasjon i mappen `manifests/main/`. Ta en titt på innholdet i `deployment.yaml`, `service.yaml` og `ingress.yaml`. Hvordan ser disse ut sammenlignet med den konfigurasjonen du har skrevet tidligere i kurset?
+3. En kodesnutt som brukes til å sette opp en Vault access definition i repoet [plattform-terraform-vault-config](https://github.com/nrkno/plattform-terraform-vault-config). _NB: Ta vare på denne kodesnutten! Vi skal bruke den hvert øyeblikk._
+
+### Legg til Vault access definition i repoet plattform-terraform-vault-config
+Skriptet genererte en Vault access definition. Denne skal inn i repoet [plattform-terraform-vault-config](https://github.com/nrkno/plattform-terraform-vault-config), i en egen fil under mappen `vault-access-definitions/vault.nrk.cloud/applications/GitHubActionsKurs/`.
+
+Når du lager filen, må du gjøre følgende tilpasninger:
+1. Start filen med tegnene `---`.
+2. Bytt ut `prod:` med `stage:`, så du viser at dette er snakk om deploy til et mindre kritisk miljø.
+3. Legg til linjeskift i slutten av filen.
+
+Klon repoet [plattform-terraform-vault-config](https://github.com/nrkno/plattform-terraform-vault-config), sjekk ut en egen branch, legg til filen, og lag en pull request på endringen. Når dette er i boks, tar du kontakt med kursholderen, for å få den godkjent.
+
+_**Tips:** Hvis du er usikker på hvordan pull requesten i plattform-terraform-vault-config skal se ut, kan du ta en titt på [denne pull requesten](https://github.com/nrkno/plattform-terraform-vault-config/pull/453)._
+
+### Sjekk inn genererte workflows og Kubernetes-konfigurasjon
+Gå tilbake til repoet du akkurat har generert, og sjekk inn den genererte GitHub Actions workflowen og Kubernetes-konfigurasjonen til branchen du jobber med, og push de opp til repoet. Lag en pull request, og merge denne til master-branchen, etter at du har fått noen til å godkjenne den, eller du har justert på [branch protection rules](https://docs.github.com/en/enterprise-server@3.4/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/managing-a-branch-protection-rule) til main-branchen.
+
+![](Images/new-repo-first-pull-request.png)
+
+Når alt er merget inn til mail-branchen, skal det starte en workflow som deployer Notes-applikasjonen til navnerommet `actions-201-kurs` i clusteret `aks-plattform-cdn-sandbox-eno`.
+
+_**Oppgave:** Ta en titt på applikasjonen som er deployet til `aks-plattform-cdn-sandbox-eno`. Ligner dette på det du satte opp tidligere i kurset? Er det forskjeller?_
