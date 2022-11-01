@@ -827,7 +827,7 @@ Hvis alt gikk bra, skal du ha fått generert blant annet:
 3. En kodesnutt som brukes til å sette opp en Vault access definition i repoet [plattform-terraform-vault-config](https://github.com/nrkno/plattform-terraform-vault-config). _NB: Ta vare på denne kodesnutten! Vi skal bruke den hvert øyeblikk._
 
 ### Legg til Vault access definition i repoet plattform-terraform-vault-config
-Skriptet genererte en Vault access definition. Denne skal inn i repoet [plattform-terraform-vault-config](https://github.com/nrkno/plattform-terraform-vault-config), i en egen fil under mappen `vault-access-definitions/vault.nrk.cloud/applications/GitHubActionsKurs/`.
+Skriptet genererte en Vault access definition. Denne skal inn i repoet [plattform-terraform-vault-config](https://github.com/nrkno/plattform-terraform-vault-config), i en egen fil under mappen `vault-access-definitions/vault-stage.nrk.cloud/applications/GitHubActionsKurs/`.
 
 Når du lager filen, må du gjøre følgende tilpasninger:
 1. Start filen med tegnene `---`.
