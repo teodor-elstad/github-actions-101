@@ -838,7 +838,11 @@ Klon repoet [plattform-terraform-vault-config](https://github.com/nrkno/plattfor
 _**Tips:** Hvis du er usikker på hvordan pull requesten i plattform-terraform-vault-config skal se ut, kan du ta en titt på [denne pull requesten](https://github.com/nrkno/plattform-terraform-vault-config/pull/453)._
 
 ### Sjekk inn genererte workflows og Kubernetes-konfigurasjon
-Gå tilbake til repoet du akkurat har generert, og sjekk inn den genererte GitHub Actions workflowen og Kubernetes-konfigurasjonen til branchen du jobber med, og push de opp til repoet. Lag en pull request, og merge denne til master-branchen, etter at du har fått noen til å godkjenne den, eller du har justert på [branch protection rules](https://docs.github.com/en/enterprise-server@3.4/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/managing-a-branch-protection-rule) til main-branchen.
+Gå tilbake til repoet du akkurat har generert. Her må vi gjøre en endring for at workflowen skal kunne hente hemmeligheter fra Vault. Åpne filen `.github/workflows/docker-build-push.yaml`, finn alle tilfeller av `secrets.PLATTFORM_VAULT_URL` og bytt de ut med `secrets.PLATTFORM_VAULT_STAGE_URL`.
+
+_**Hvorfor må vi gjøre dette?** Clusteret vi bruker i kurset, er et test-cluster som lever et litt spesielt sted. Derfor finner man ikke hemmelighetene som trengs for å logge på det i den vanlige Vault-instansen, men må gå til en spesiel instans om er satt opp i et stage-miljø. Vanligvis trenger man ikke å gjøre dette, men siden vi bruker dette sandbox-clustere i kurset, må vi gjøre det her. Det er planlagt støtte for dette i [nrk-template-build-and-deploy](https://github.com/nrkno/nrk-template-build-and-deploy/pull/33) på sikt._
+
+ og sjekk inn den genererte GitHub Actions workflowen og Kubernetes-konfigurasjonen til branchen du jobber med, og push de opp til repoet. Lag en pull request, og merge denne til master-branchen, etter at du har fått noen til å godkjenne den, eller du har justert på [branch protection rules](https://docs.github.com/en/enterprise-server@3.4/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/managing-a-branch-protection-rule) til main-branchen.
 
 ![](Images/new-repo-first-pull-request.png)
 
