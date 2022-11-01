@@ -842,7 +842,7 @@ Gå tilbake til repoet du akkurat har generert. Her må vi gjøre en endring for
 
 _**Hvorfor må vi gjøre dette?** Clusteret vi bruker i kurset, er et test-cluster som lever et litt spesielt sted. Derfor finner man ikke hemmelighetene som trengs for å logge på det i den vanlige Vault-instansen, men må gå til en spesiel instans om er satt opp i et stage-miljø. Vanligvis trenger man ikke å gjøre dette, men siden vi bruker dette sandbox-clustere i kurset, må vi gjøre det her. Det er planlagt støtte for dette i [nrk-template-build-and-deploy](https://github.com/nrkno/nrk-template-build-and-deploy/pull/33) på sikt._
 
- og sjekk inn den genererte GitHub Actions workflowen og Kubernetes-konfigurasjonen til branchen du jobber med, og push de opp til repoet. Lag en pull request, og merge denne til master-branchen, etter at du har fått noen til å godkjenne den, eller du har justert på [branch protection rules](https://docs.github.com/en/enterprise-server@3.4/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/managing-a-branch-protection-rule) til main-branchen.
+Når du har oppdatert `docker-build-push.yaml`-filen, kan du sjekke inn alle de genererte filene til branchen du jobber med, og push de opp til repoet. Lag en pull request, og merge denne til master-branchen, etter at du har fått noen til å godkjenne den, eller du har justert på [branch protection rules](https://docs.github.com/en/enterprise-server@3.4/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/managing-a-branch-protection-rule) til main-branchen.
 
 ![](Images/new-repo-first-pull-request.png)
 
