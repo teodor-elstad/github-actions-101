@@ -831,8 +831,7 @@ Skriptet genererte en Vault access definition. Denne skal inn i repoet [plattfor
 
 Når du lager filen, må du gjøre følgende tilpasninger:
 1. Start filen med tegnene `---`.
-2. Bytt ut `prod:` med `stage:`, så du viser at dette er snakk om deploy til et mindre kritisk miljø.
-3. Legg til linjeskift i slutten av filen.
+2. Legg til linjeskift i slutten av filen.
 
 Klon repoet [plattform-terraform-vault-config](https://github.com/nrkno/plattform-terraform-vault-config), sjekk ut en egen branch, legg til filen, og lag en pull request på endringen. Når dette er i boks, tar du kontakt med kursholderen, for å få den godkjent.
 
